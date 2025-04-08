@@ -54,55 +54,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Setup Trivy
-        uses: aquasecurity/setup-trivy@v0.2.2
-        with:
-          trivy-version: '0.60.0'
-          skip-install: false
-        timeout-minutes: 5
-        retry-on-error: true
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: prabhath090/qr_code_api:${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
+          tags: prabhath090/qr_code_api:${{ github.sha }} # Uses the Git SHA for tagging
+          platforms: linux/amd64,linux/arm64 # Multi-platform support
           cache-from: type=registry,ref=prabhath090/qr_code_api:cache
           cache-to: type=inline,mode=max
-        id: build
           
-      - name: Trivy security scan
+      - name: Scan the Docker image
         uses: aquasecurity/trivy-action@master
-        continue-on-error: true
         with:
-          image-ref: '${{ steps.build.outputs.image }}'
+          image-ref: 'prabhath090/qr_code_api:${{ github.sha }}'
           format: 'table'
-          timeout: '5m0s'
+          exit-code: '0' # Don't fail the build, just report vulnerabilities
           ignore-unfixed: true
-          vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-        retries: 3
-        retry-wait-seconds: 30
-        retry-on-error:
-          - 'trivy: error scanning'
-          - 'trivy: error building'
-          - 'trivy: error downloading'
-          - 'trivy: error parsing'
-          - 'trivy: error processing'
-          - 'trivy: error reporting'
-          - 'trivy: error scanning'
-          - 'trivy: error sending'
-          - 'trivy: error uploading'
-          - 'trivy: error waiting'
-          - 'trivy: timeout'
-          - 'trivy: unable to'
-          - 'trivy: unable to connect'
-          - 'trivy: unable to download'
-          - 'trivy: unable to parse'
-          - 'trivy: unable to process'
-          - 'trivy: unable to report'
-          - 'trivy: unable to scan'
-          - 'trivy: unable to send'
-          - 'trivy: unable to upload'
-          - 'trivy: unable to wait'
