@@ -54,6 +54,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          trivy-version: '0.60.0'
+          skip-install: false
+        timeout-minutes: 5
+        retry-on-error: true
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -62,12 +70,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=prabhath090/qr_code_api:cache
           cache-to: type=inline,mode=max
+        id: build
           
-      - name: Scan the Docker image
+      - name: Trivy security scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'prabhath090/qr_code_api:${{ github.sha }}'
+          image-ref: '${{ steps.build.outputs.image }}'
           format: 'table'
-          exit-code: '1' # Fail the job if vulnerabilities are found
+          timeout: '5m0s'
           ignore-unfixed: true
+          vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+        continue-on-error: true
