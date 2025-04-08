@@ -74,6 +74,7 @@ jobs:
           
       - name: Trivy security scan
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: '${{ steps.build.outputs.image }}'
           format: 'table'
@@ -81,4 +82,5 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-        continue-on-error: true
+        retries: 3
+        retry-wait-seconds: 30
